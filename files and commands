@@ -1,0 +1,807 @@
+https://github.com/DevMadhup/Terraform_automation
+
+https://github.com/LondheShubham153/TerraWeek  
+
+VSCODE SETUP= https://medium.com/@christyjacob4/using-vscode-remotely-on-an-ec2-instance-7822c4032cff
+
+implement using terraform  using best practice od stae locking and remote backeend 
+
+
+after aws cli configure credentials stored in .aws --> credentials
+**************************
+##TERRAFORM   // COMPITATOR 1.CROSSPLANE
+
+#hashicorp terraform and hashicorp hcl plugins for visual studio
+
+//API as a code  //communicate with multiple cloud providers azure/aws/gcp    //HCL CODE IS CONVERTING IN REQUIRED API LIKE AWS /AZURE
+#huge community
+
+https://learning-ocean.com/tutorials/terraform/terraform-list-variable/ 
+
+
+
+
+terraform init
+terraform validate
+terraform plan
+terraform apply	
+terraform apply -var-file=dev.tfvars
+terraform state list -- to print which resource present in state file/number of resource in created using .tf file
+terraform state show resource_name  #to open specific resource state file: eg: you want to check instance state. 
+ex:  
+root@ip-172-31-40-214:~/terraform-practice/ec2# terraform state list
+aws_default_vpc.default
+aws_instance.VMA
+aws_key_pair.my-ssh-key
+aws_security_group.my_sg
+  
+terraform show -- to open state file directly without name
+terraform fmt --  include adding proper indentation and spacing to make the configuration more readable and consistent with Terraform's style guidelines.
+ *******************************
+ 
+ #We can crete any file name with  .tf extention
+ main.tf
+ variable.tf
+ resource.tf
+ ec2.tf
+ s3.tf
+ output.tf
+ 
+ anything you can write
+ 
+ ##Argurmnts= filname which we are using while writing file eg: sample1.txt
+ ##attribute= after Terraform apply some fields showing (known after apply) know as attribute
+ 
+ 
+
+
+************
+To hide sensitive information 
+
+sensitive = true
+
+****
+TERRAFORM DOCKER Nginx:latest image
+
+terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "3.0.2"
+    }
+  }
+}
+
+provider "docker" {
+  host = "unix:///var/run/docker.sock"
+}
+
+# Pulls the image
+resource "docker_image" "nginx" {
+  name = "nginx:latest"
+  keep_locally = false
+}
+
+# Create a container
+resource "docker_container" "cont1" {
+  image = docker_image.nginx.image_id
+  name  = "container1nginx"
+ ports{
+  internal = 80
+  external = 80
+}
+}
+
+yum install docker or sudo apt-get install docker.io
+
+docker service start
+
+sudo usermod -aG docker $USER
+
+sudo chmod 666 /var/run/docker.sock
+
+sudo chown $USER /var/run/docker.sock
+
+sudo systemctl restart docker
+
+************************************************** AWS
+## install aws cli
+## aws configure
+## for terraform export accesskey and secrate key
+
+terraform {                                          // terraform block for terraform
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {                                    //provider aws block for to put aws related info
+  region     = "us-east-2"
+  access_key = ""                       //or you can export accesskey and secret_key for environment variable
+  secret_key = ""
+}
+
+
+resource "aws_instance" "S1" {
+  ami           = "ami-05fb0b8c1424f266b"  # Wrap the AMI ID in double quotes
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = "testinstance"
+  }
+}
+
+
+***************create multiple ec2 instances with same name*******************************
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region     = "ap-south-1"
+  access_key = "AKIAUX7GXHC4P7U54DMF"
+  secret_key = "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"
+}
+
+
+resource "aws_instance" "S1" {                              // name is same "S1" bcz its kind of tag , here instance ID is unique
+  count = "3"
+  ami           = "ami-007020fd9c84e18c7"
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = "instancebyterrafrom"
+  }
+}
+
+output "ec2_public_ips" {                               // ips --.> for multiple ips
+  value = aws_instance.S1[*].public_ip                  // * is for to print multiple public ips
+}
+
+***************************************************************
+##ec2 with different name's incrementally
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region     = "ap-south-1"
+  access_key = "AKIAUX7GXHC4P7U54DMF"
+  secret_key = "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"
+}
+
+
+resource "aws_instance" "S1" {
+  count = "3"
+  ami           = "ami-007020fd9c84e18c7"
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = "instancebyterrafrom ${count.index}"             //or Name = "instancebyterrafrom-${count.index}test"
+  }
+}
+
+output "ec2_public_ips" {
+  value = aws_instance.S1[*].public_ip
+}
+
+//output                                                    //output
+instancebyterrafrom0                                          instancebyterrafrom0test
+instancebyterrafrom1
+instancebyterrafrom2
+***********************************************************************************************
+##terraform foreach count   // to give different names for each ec2 instance
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region     = "ap-south-1"
+  access_key = "AKIAUX7GXHC4P7U54DMF"
+  secret_key = "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"
+}
+
+
+locals {                                                  //locals=nothing but local variables
+   instances = toset (["demo1","demo2","demo3"])   // toset convert list in to set
+}
+
+resource "aws_instance" "S1" {
+  for_each = local.instances                        // use local to access instance names
+  ami           = "ami-007020fd9c84e18c7"
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = each.key                                 // all instance names are keys eg. demo1 demo2 demo3
+  }
+}
+
+****************************************************************************
+
+## create multiple instance with different name and different AMI-ID
+ // using map key: value pair 
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region     = "ap-south-1"
+  access_key = "AKIAUX7GXHC4P7U54DMF"
+  secret_key = "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"
+}
+
+
+locals {
+   instances = {"demo1":"ami-09298640a92b2d12c","demo2":"ami-007020fd9c84e18c7","demo3":"ami-09298640a92b2d12c"}   // maps key:value pair
+}
+
+resource "aws_instance" "S1" {
+  for_each = local.instances
+  ami = each.value
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = each.key
+  }
+}
+==================================================================TO stop ec2 instances after creation-============================
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region     = "us-west-2"
+  access_key = ""
+  secret_key = ""
+}
+
+resource "aws_instance" "VMA" {
+  ami           = "ami-075686beab831bb7f"
+  instance_type = "t2.micro"
+  count = 2
+  tags = {
+    Name = "sush-terra-instance"
+  }
+}
+
+#if instance count is more then 1
+resource "null_resource" "stop_instances" {
+  count = 2
+
+  provisioner "local-exec" {
+    command = "aws ec2 stop-instances --instance-ids ${aws_instance.VMA[count.index].id}"
+  }
+
+  depends_on = [aws_instance.VMA]
+
+  triggers = {
+    instance_id = aws_instance.VMA[count.index].id
+  }
+}
+
+### count is =1 # for change state
+
+resource "aws_instance" "VMA" {
+  ami           = "ami-075686beab831bb7f"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "sush-terra-instance"
+  }
+}
+
+resource "aws_ec2_instance_state" "test" {
+  instance_id = aws_instance.VMA.id
+  state       = "stopped"
+}
+================================================================EC2/VPC/SG/Inbound/Outbounbd/KEYpair/Output======================
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region     = "us-west-2"
+  access_key = ""
+  secret_key = ""
+}
+
+
+resource "aws_key_pair" "my-ssh-key" {
+  key_name   = "terrakey"
+  public_key = file("/root/terraform-practice/ec2/terrakey.pub")
+}
+
+resource "aws_default_vpc" "default" {
+  tags = {
+    Name = "Default VPC"
+  }
+}
+
+resource "aws_security_group" "my_sg" {
+  name        = "my_sg"
+  description = "Allow TLS inbound traffic and all outbound traffic"
+  vpc_id      = aws_default_vpc.default.id
+
+  tags = {
+    Name = "my_sg"
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow ssh traffic"
+  }
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow HTTP traffic"
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = " This is for outside world traffic"
+  }
+
+}
+resource "aws_instance" "VMA" {
+  ami             = "ami-075686beab831bb7f"
+  instance_type   = "t2.micro"
+  key_name        = aws_key_pair.my-ssh-key.key_name
+  security_groups = [aws_security_group.my_sg.name]
+  tags = {
+    Name = "sush-terra-instance"
+  }
+}
+
+output "instance_public_ip" {
+  description = "Public IP address of the EC2 instance"
+  value       = aws_instance.VMA.public_ip
+}
+
+********************************************************************************************************************************************
+
+
+## create S3 bucket
+
+
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region     = "ap-south-1"
+  access_key = ""
+  secret_key = ""
+}
+
+resource "aws_s3_bucket" "myfirstbucket" {
+  bucket = "bucket-sush-1"
+
+  tags = {
+    Name        = "bucketsush1"
+    Environment = "Dev"
+  }
+}
+
+resource "aws_s3_bucket" "myfirstbucket1" {
+  bucket = "bucket-sush-2"                                   //bucket name
+
+  tags = {
+    Name        = "bucketsush2"
+    Environment = "Dev"
+  }
+}
+
+
+## to destroy any specific bucket-sush-2
+
+terraform destroy -target=aws_s3_bucket.myfirstbucket1
+
+
+********************************************************Variables****************************************
+type1**
+
+variable.tf**
+
+variable "filename" {
+  default = "/home/ubuntu/terraform/terraformvariables/demo1.txt"
+}
+
+variable "content" {
+  default = "file created from variable"
+}
+
+main.tf**
+
+resource "local_file" "variablefile" {
+  content  = var.content
+  filename = var.filename
+}
+
+*******************************************
+##TYPE2 **  Environment variable by using EXPORT command
+
+export TF_VAR_sample_test=variable-form-environment       // you can change variable value here and avoid space in value
+
+##variable.tf**
+
+variable "sample_test" {}
+
+##main.tf **
+
+output "sample_test" {
+value = var.sample_test
+}
+
+
+terraform apply
+
+##output****
+sample_test = "variable-form-environment"
+
+*****************************
+##type3 ** 
+variable type = map   {}
+
+##variable.tf 
+
+variable "filename" {
+  default = "/home/ubuntu/terraform/terraformvariables/demo1.txt"
+}
+
+variable "content_map" {
+type = map
+default = {
+"content1" = "this is content1"
+"content2" = "this is content2"
+}
+}
+
+##main.tf
+
+resource "local_file" "testfile1" {
+  content  = var.content_map[ "content1" ]                                           //override old file content
+  filename = "/home/ubuntu/terraform/terraformvariables/testfile1.txt"              
+}
+
+resource "local_file" "variablefile" {
+  content  = var.content_map [ "content2" ]                                           //override old file content
+  filename = var.filename                                                             
+}
+
+
+********************************************************************************************
+##type 4 
+
+varibale type  = list []         
+
+
+## varibale.tf
+
+variable "file_list" {
+  type = list                    // or  type = list(string)
+  default = ["/home/ubuntu/terraform/terraformvariables/demo21.txt" , "/home/ubuntu/terraform/terraformvariables/demo22.txt"]
+}
+
+##main.tf
+
+resource "local_file" "testfile1" {
+  content  = var.content_map[ "content1" ]
+  filename = var.file_list[0]
+}
+
+resource "local_file" "variablefile" {
+  content  = var.content_map [ "content2" ]
+  filename = var.file_list[1]
+}
+
+
+**************************************************************************************
+###type 5  object variable
+
+variable.tf
+
+variable "aws_ec2_info" {
+  type = object({
+    name = string
+    count = number
+    keys = list(string)
+    ami = string
+
+})
+
+ default = {
+    name = "test1_ec2_instance"
+    count = 5
+    keys = ["key1.pem","key2.pem"]
+    ami = "centos-bh555j"
+
+}
+}
+
+
+###main.tf
+
+output "aws_ec2_info" {
+ value = {
+ name = var.aws_ec2_info.name
+ count = var.aws_ec2_info.count
+}
+}
+
+or 
+
+##main.tf            // to print complete object value
+
+
+output  "aws_ec2_info" {
+  
+ value = var.aws_ec2_info
+ 
+}
+
+##output
+
++ aws_ec2_info = {
+      + count = 5
+      + name  = "test1_ec2_instance"
+    }
+	
+*******************************************************************************************
+
+##type 6  ##   dev.tfvars  or dev.tfvars.json   #We can use any of name from both
+
+ // variable file pass in runtime while running terraform plan/apply command 
+ // we can create different different .tfvars file according to different environment
+ 
+ 
+ ##dev.tfvars.json
+ 
+ {
+ "name" : "dev_instance_1",
+ "number" : "5"
+ }
+
+## variables.tf
+
+variable "name" {}
+variable "number" {}            // need to declare variables in variables.tf file
+
+
+## main.tf
+
+output "instance_details" {                  // create output variables to print variables value
+ value = {
+ name= var.name
+ count = var.number
+}
+}
+
+## command to execute 
+
+terraform plan -var-file=dev.tfvars.json
+
+## output
+
+instance_details = {
+      + count = "5"
+      + name  = "dev_instance_1"
+    }
+	
+	
+*********************************************************************************************************
+#################provisioners #####################################
+# To create VPC/SUBNET/ROUTTABLE/GATEWAY/SECURITY GROUP/KEY/EC2/SSH CONNECTION/COPY FILE
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region     = "ap-south-1"
+  access_key = ""
+  secret_key = ""
+}
+
+variable "cidr" {
+  default = "10.0.0.0/16"
+}
+
+resource "aws_key_pair" "deployer" {
+  key_name   = "deployer-sush-key"
+  public_key = file("/home/ubuntu/.ssh/id_rsa.pub")
+}
+
+resource "aws_vpc" "testvpc" {
+  cidr_block = var.cidr
+ 
+  tags = {
+    Name = "testvpc"
+  }
+
+}
+
+resource "aws_subnet" "sub1" {
+  vpc_id     = aws_vpc.testvpc.id
+  cidr_block = "10.0.0.0/24"
+  availability_zone  = "ap-south-1a"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "sub1"
+  }
+}
+
+resource "aws_internet_gateway" "gw1" {
+  vpc_id = aws_vpc.testvpc.id
+
+  tags = {
+    Name = "gw1"
+  }
+}
+
+resource "aws_route_table" "rttest1" {
+  vpc_id = aws_vpc.testvpc.id
+
+  tags = {
+    Name = "routetabletest1"
+  }
+
+  
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.gw1.id
+  }
+}
+
+resource "aws_route_table_association" "rta1" {
+  subnet_id      = aws_subnet.sub1.id
+  route_table_id = aws_route_table.rttest1.id
+
+}
+
+resource "aws_security_group" "psg1" {
+  name        = "terra_provision_sg1"
+  description = "Allow TLS inbound traffic and outbound traffic"
+  vpc_id      = aws_vpc.testvpc.id
+
+  
+
+  ingress {
+    description = "HTTP from VPC"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "terra-provison-sg1"
+  }
+}
+
+resource "aws_instance" "servertest" {
+  ami                    = "ami-007020fd9c84e18c7"
+  instance_type          = "t2.micro"
+  key_name   = aws_key_pair.deployer.key_name
+  vpc_security_group_ids = [aws_security_group.psg1.id]
+  subnet_id              = aws_subnet.sub1.id
+
+  tags = {
+    Name = "provisionservertest1"
+  }
+
+ connection {
+    type        = "ssh"
+    user        = "ubuntu"  
+    private_key = file("~/.ssh/id_rsa") 
+    host        = self.public_ip
+  }
+
+
+  provisioner "file" {
+    source      = "sample.txt"  
+    destination = "/home/ubuntu/sample.txt"  
+  }
+
+}
+
+
+********************************************************************
+terraform {                                          
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {                                    
+  region     = "us-east-2"
+  access_key = ""                       
+  secret_key = ""
+}
+
+
+resource "aws_instance" "S1" {
+  ami           = "ami-05fb0b8c1424f266b"  # Wrap the AMI ID in double quotes
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = "testinstance"
+  }
+}
+
+
+********************************************
+terraform plan -target=local_file.my_file    #to execute only specific file from bunch of files this fiel present in main.tf  others file will not execute present in the same directory
+terraform apply -target=local_file.my_file
+terraform destroy -target=local_file.my_file
