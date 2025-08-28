@@ -1,0 +1,197 @@
+# Split the variable value into individual lines
+ $lines = $variableValue -split '\r?\n' 
+# Loop through each line and find the ones containing "SMTP" in uppercase 
+ $smtpLines = $lines | Where-Object { $_ -cmatch '^SMTP:' } 
+# Output the filtered lines 
+ $smtpLines
+ 
+ 
+ 
+ 
+ smtp:resolve.userc1@stefanini.com SMTP:resolve.userd1@stefanini.com smtp:resolve.userb1@stefanini.com smtp:resolve.usera1@stefanini.com smtp:resolve.usr1@stefanini.com smtp:resolve.useeer1@stefanini.com smtp:resolve.useer1@stefanini.com smtp:resolve.userrrz1@stefanini.com smtp:resolve.userrry1@stefanini.com smtp:resolve.userrrx1@stefanini.com smtp:resolve.userrrw1@stefanini.com smtp:resolve.userrrv1@stefanini.com smtp:resolve.userrru1@stefanini.com smtp:resolve.userrrt1@stefanini.com smtp:resolve.userrrs1@stefanini.com smtp:resolve.userrrp1@stefanini.com smtp:resolve.user1@stefanini.com SMTP:resolvep1.user1@stefanini.com smtp:resolveeee.user1@stefanini.com x500:/o=ExchangeLabs/ou=Exchange Administrative Group (FYDIBOHF23SPDLT)/cn=Recipients/cn=790d365df1ba4f23acd42a324360bbc3-6b452f9c-f6 smtp:resolve.userrcd1@stefanini.com smtp:resolve.userrb1@stefanini.com smtp:resolve.userra1@stefanini.com smtp:resolve.userr1@stefanini.com
+{
+    "ADConnectionStatus":  true,
+    "removeDetails":  {
+                      }
+}
+
+
+
+*********************
+
+   $proxyAddressesOutput = (Get-ADUser -Identity $username -Properties ProxyAddresses -ErrorAction Stop).ProxyAddresses
+			 
+              
+ # Use regex to extract all substrings starting with smtp and ending with com
+  $smtpStrings = "$proxyAddressesOutput" -split '\s+' | Where-Object { $_ -cmatch '^SMTP:(.*?\.com)$' }
+
+ # Output the extracted strings
+  $smtpString
+              
+ # Write-Host $smtpString
+ 
+ if ($smtpString) {
+                    #Set-ADUser -Identity $username -Remove @{proxyAddresses = "SMTP:$smtpString"} -Credential $ADserviceaccount -ErrorAction Stop
+                    $resultr.RemovedUCSMTPAddresses = "ProxyAddresses SMTP removed successfully: $smtpString"
+                } else {
+                    $resultr.RemovedUCSMTPAddresses = "No ProxyAddress Uppercase SMTP found to remove for user: $username"
+                }
+            } catch {
+                $resultr.RemovedUCSMTPAddresses = "Failed to discover ProxyAddress Uppercase SMTP . Error: $_"
+            }
+			
+			
+			
+			**************************************************************************************************
+			
+			working
+			
+			
+			
+			
+$username = "$INPUT{uname}"
+#$username = "resolve.user1"
+#$request = "remove"
+$email = "$INPUT{mail}"
+$eemail = "$INPUT{eemail}"
+$eextattribute = "$INPUT{eextattribute}"
+$extentionat = "$INPUT{eattribute}"
+$ppaddress = "$INPUT{ppaddress}"
+$proxyAddresses = "$INPUT{upaddress}"
+$proxyAddressesl = "$INPUT{lpaddress}"
+$request = "$INPUT{reqtype}"
+$reqemail = "$INPUT{reqemail}"
+$tnumber = "$INPUT{tnumber}"
+
+$oldemail = "$INPUT{oldemail}"
+$oldextentionat = "$INPUT{oldemail}"
+$oldupAddresses = "$INPUT{oldemail}"
+$newemail = "$INPUT{newemail}"
+$newextentionat = "$INPUT{newemail}"
+$newupAddresses = "$INPUT{newemail}"
+$oldlpAddressesl = "$INPUT{oldemail}"
+
+$ADserviceaccountUsername = "$INPUT{adsausername}"
+$ADserviceaccountPassword = ConvertTo-SecureString "$INPUT{adsapassword}" -AsPlainText -Force 
+$ADserviceaccount = New-Object System.Management.Automation.PSCredential ($ADserviceaccountUsername, $ADserviceaccountPassword)
+
+# Initialize result object
+$resultr = @{}
+
+# Perform action based on request type
+if ($request -eq "remove") {
+    try {
+        # Check AD Connection
+        $session = Get-ADUser -Credential $ADserviceaccount -Filter * -ErrorAction Stop
+        $ADConnectionStatus = $true
+        
+        # Remove email address if provided
+        if ($eemail) {
+            try {
+                $oldEmail = (Get-ADUser -Identity $username -Properties EmailAddress -ErrorAction Stop).EmailAddress
+                Write-Host $oldEmail 
+                if ($oldEmail) {
+                    #Set-ADUser -Identity $username -Remove @{mail = $oldEmail} -Credential $ADserviceaccount -ErrorAction Stop
+                    $resultr.RemovedEmail = "Mail removed successfully: $oldEmail"
+                } else {
+                    $resultr.RemovedEmail = "No mail found to remove for user: $username"
+                }
+            } catch {
+                $resultr.RemovedEmail = "Failed to discover mail. Error: $_"
+            }
+        }
+        
+        # Remove extension attribute if provided
+        if ($eextattribute) {
+            try {
+                $extensionattrb = (Get-ADUser -Identity $username -Properties extensionAttribute15 -ErrorAction Stop).extensionAttribute15
+                Write-Host $extensionattrb
+                if ($extensionattrb) {
+                    #Set-ADUser -Identity $username -Remove @{extensionattribute15 = $extensionattrb} -Credential $ADserviceaccount -ErrorAction Stop
+                    $resultr.RemovedExtAttribute15 = "Extension attribute removed successfully: $extensionattrb"
+                } else {
+                    $resultr.RemovedExtAttribute15 = "No extensionattribute15 found to remove for user: $username"
+                }
+            } catch {
+                $resultr.RemovedExtAttribute15 = "Failed to discover extensionattribute15 attribute. Error: $_"
+            }
+        }
+        
+        # Remove proxy addresses if provided
+        if ($ppaddress) {
+            try {
+              
+                #$paddress = (Get-ADUser -Identity $username -Properties ProxyAddresses -ErrorAction Stop).ProxyAddresses
+                # Original command
+                # Original command
+                # Original command
+              $proxyAddressesOutput = (Get-ADUser -Identity $username -Properties ProxyAddresses -ErrorAction Stop).ProxyAddresses
+			  # Split the variable value into individual lines
+              
+             # Write-Host $proxyAddressesOutput
+              
+              
+              #$variableValue = " smtp:resolve.userc1@stefanini.com SMTP:resolve.userd1@stefanini.com smtp:resolve.userb1@stefanini.com smtp:resolve.usera1@stefanini.com smtp:resolve.usr1@stefanini.com smtp:resolve.useeer1@stefanini.com smtp:resolve.useer1@stefanini.com smtp:resolve.userrrz1@stefanini.com smtp:resolve.userrry1@stefanini.com smtp:resolve.userrrx1@stefanini.com smtp:resolve.userrrw1@stefanini.com smtp:resolve.userrrv1@stefanini.com smtp:resolve.userrru1@stefanini.com smtp:resolve.userrrt1@stefanini.com smtp:resolve.userrrs1@stefanini.com smtp:resolve.userrrp1@stefanini.com smtp:resolve.user1@stefanini.com SMTP:resolvep1.user1@stefanini.com smtp:resolveeee.user1@stefanini.com x500:/o=ExchangeLabs/ou=Exchange Administrative Group (FYDIBOHF23SPDLT)/cn=Recipients/cn=790d365df1ba4f23acd42a324360bbc3-6b452f9c-f6 smtp:resolve.userrcd1@stefanini.com smtp:resolve.userrb1@stefanini.com smtp:resolve.userra1@stefanini.com smtp:resolve.userr1@stefanini.com"
+
+# Use regex to extract all substrings starting with smtp and ending with com
+$smtpStrings = "$proxyAddressesOutput" -split '\s+' | Where-Object { $_ -cmatch '^SMTP:(.*?\.com)$' }
+
+# Output the extracted strings
+$smtpStrings
+              
+              
+              
+              
+              
+
+            #  $smtpString = "$proxyAddressesOutput" -match 'SMTP:(.*?\.com)' | Out-Null; $matches[0]
+
+              
+             # Write-Host $smtpString
+              
+              <#
+              
+              
+              $lines = $proxyAddressesOutput -split '\r?\n' 
+              # Loop through each line and find the ones containing "SMTP" in uppercase 
+              $smtpAddress = $lines | Where-Object { $_ -cmatch '^SMTP:' } 
+              # Output the filtered lines 
+               Write-Host $smtpAddress
+
+             # Extract SMTP addresses using regular expression
+               $smtpAddresses = $proxyAddressesOutput -split ' ' | Where-Object { $_ -match '^SMTP:[A-Z]:' }
+
+             # Filter out the first SMTP address and remove "SMTP:" prefix
+             $smtpAddress = ($smtpAddresses | Select-Object -First 1).Substring(5)
+ 
+          # Output the first SMTP address
+              Write-Host $smtpAddress
+
+                if ($smtpAddress) {
+                    #Set-ADUser -Identity $username -Remove @{proxyAddresses = "SMTP:$paddress"} -Credential $ADserviceaccount -ErrorAction Stop
+                    $resultr.RemovedUCSMTPAddresses = "ProxyAddresses SMTP removed successfully: $smtpAddress"
+                } else {
+                    $resultr.RemovedUCSMTPAddresses = "No ProxyAddress Uppercase SMTP found to remove for user: $username"
+                }
+              #>
+            } catch {
+                $resultr.RemovedUCSMTPAddresses = "Failed to discover ProxyAddress Uppercase SMTP . Error: $_"
+            }
+        }
+    } catch {
+        # Handle AD Connection error
+        $ADConnectionStatus = $false
+        $resultr.ErrorMessage = "Failed to connect to Active Directory: $_"
+    }
+} else {
+    $result.ErrorMessage = "Invalid request type: $request"
+}
+
+# Output Object
+$output = [PSCustomObject]@{
+    ADConnectionStatus = $ADConnectionStatus
+    removeDetails = $resultr
+}
+
+# Convert output object to JSON
+$output | ConvertTo-Json -Depth 1
